@@ -1,7 +1,8 @@
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity ,View } from 'react-native';
+import { Image, Platform, StyleSheet, Text, TouchableOpacity ,View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Sharing from 'expo-sharing';
+import uploadAnonymousFilesAsync from 'anonymous-files';
 
 import logo from './assets/logo.png';
 
@@ -18,9 +19,15 @@ export default function App() {
     }
 
     let pickerResult = await ImagePicker.launchImageLibraryAsync();
-
     if(pickerResult.cancelled === true) {
       return;
+    }
+
+    if (Platform.OS === 'web') {
+      let remoteUri = await uploadAnonymousFilesAsync(pickerResult.uri);
+      setSelectedImage({ localUri: pickerResult.uri, remoteUri});
+    } else {
+      setSelectedImage({ localUri: pickerResult.uri, remoteUri: null });
     }
 
     setSelectedImage({ localUri: pickerResult.uri});
@@ -28,7 +35,7 @@ export default function App() {
 
   let openShareDialogAsync = async () => {
     if (!(await Sharing.isAvailableAsync())) {
-      alert('Ops! Não disponível neste dispositivo');
+      alert(`A imagem está disponível para compartilhamento em: ${selectedImage.remoteUri}`);
       return;
     }
 
